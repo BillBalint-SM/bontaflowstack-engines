@@ -1,0 +1,20 @@
+name: Engine checks
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1 -Install -InstallBrowser
+      - shell: pwsh
+        run: |
+          $env:PLAYWRIGHT_BROWSERS_PATH = Join-Path (Get-Location) '.browsers'
+          npm.cmd test
+      - run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1

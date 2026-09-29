@@ -1,0 +1,15 @@
+{
+  "name": "bontaflowstack-engines",
+  "private": true,
+  "version": "0.3.0",
+  "type": "module",
+  "description": "BontaFlowStack browser, rendering and local design tools",
+  "dependencies": {
+    "@chenglou/pretext": "0.0.8",
+    "playwright": "1.62.1"
+  },
+  "scripts": {
+    "build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build.ps1",
+    "test": "node --test tests/*.test.mjs"
+  }
+}
