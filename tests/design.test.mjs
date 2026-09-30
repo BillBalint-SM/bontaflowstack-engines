@@ -18,6 +18,29 @@ test('comparison does not invent a choice and selection binds the chosen image',
   assert.deepEqual(design(['selection','--board',board]),chosen);
   fs.appendFileSync(image,'changed');
   assert.throws(()=>design(['select','--board',board,'--index','1','--reason','Previous choice']),/changed/);
+  assert.throws(()=>design(['selection','--board',board]),/changed/);
+});
+
+test('regenerated comparisons invalidate choices and old selection files are checked',()=>{
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'bfs-design-regeneration-'));
+  const first=path.join(root,'first.png'),second=path.join(root,'second.png'),board=path.join(root,'board.html');
+  fs.writeFileSync(first,Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64'));
+  fs.copyFileSync(first,second);
+  for(const args of [ ['compare','--images',second],['gallery','--designs-dir',root],['diff','--before',first,'--after',second] ]) {
+    design(['compare','--images',first,'--output',board]);
+    design(['select','--board',board,'--index','1','--reason','Fixture user chose direction 1']);
+    design([...args,'--output',board]);
+    assert.equal(design(['selection','--board',board]),null,args[0]);
+  }
+  design(['compare','--images',first,'--output',board]);
+  const old=design(['select','--board',board,'--index','1','--reason','Fixture user chose direction 1']);
+  design(['compare','--images',second,'--output',board]);
+  writeJson(`${board}.selection.json`,old);
+  assert.throws(()=>design(['selection','--board',board]),/changed/);
+  const fresh=design(['select','--board',board,'--index','1','--reason','Fixture user chose the new direction']);
+  assert.deepEqual(design(['selection','--board',board]),fresh);
+  writeJson(`${board}.selection.json`,{schema:1});
+  assert.throws(()=>design(['selection','--board',board]),/Invalid/);
 });
 
 test('optional tools require explicit executable configuration and never install themselves',()=>{

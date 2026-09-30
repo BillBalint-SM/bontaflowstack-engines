@@ -18,7 +18,17 @@ export function design(args,cwd=process.cwd()) {
   const [action,...parameters]=args;
   if(!action || ['help','--help'].includes(action))return help;
   const {values}=options(parameters);
-  if(action==='selection')return readJson(path.resolve(cwd,`${values.board}.selection.json`));
+  if(action==='selection') {
+    ensure(typeof values.board==='string','A board path is required');
+    const board=path.resolve(cwd,values.board), chosen=readJson(`${board}.selection.json`);
+    if(chosen===null)return null;
+    ensure(chosen.schema===1 && typeof chosen.selected?.path==='string' && /^[a-f0-9]{64}$/.test(chosen.selected.sha256),'Invalid design selection');
+    const metadata=readJson(`${board}.json`);
+    ensure(metadata?.schema===1 && Array.isArray(metadata.images) && metadata.images.some(item=>item.path===chosen.selected.path && item.sha256===chosen.selected.sha256),
+      'The comparison changed; regenerate it and record the actual user choice');
+    ensure(sha(chosen.selected.path)===chosen.selected.sha256,'The selected image changed; regenerate the comparison before choosing');
+    return chosen;
+  }
   if(action==='select') {
     ensure(values.board && values.reason,'A board and the actual user choice are required');
     const board=path.resolve(cwd,values.board), metadata=readJson(`${board}.json`), index=Number(values.index)-1;
@@ -47,6 +57,7 @@ export function design(args,cwd=process.cwd()) {
   const html=`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title><style>body{margin:0;padding:clamp(16px,4vw,56px);background:#f3f0eb;color:#202722;font:17px/1.5 system-ui}main{max-width:1440px;margin:auto}h1{font-size:clamp(28px,4vw,48px);line-height:1.1}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr));gap:24px}.option{display:block;padding:16px;background:white;border:2px solid #cbcfc8;border-radius:12px;cursor:pointer}.option:has(input:checked){border-color:#27613e;box-shadow:0 0 0 3px #cce6d2}.option:focus-within{outline:3px solid #c16825;outline-offset:4px}.option span{display:inline-block;margin-bottom:16px}img{display:block;width:100%;height:auto;border-radius:4px}input{accent-color:#27613e}button{font:inherit;padding:12px 20px;border:0;border-radius:8px;background:#27613e;color:white;margin-top:24px}button:disabled{opacity:.5}#result{min-height:1.5em}</style><main><h1>${escapeHtml(title)}</h1><p>Compare the images at their actual proportions. Select the direction to continue with.</p><div class="grid">${cards}</div><button id="save" disabled>Download selection</button><p id="result" aria-live="polite"></p></main><script>const button=document.querySelector('#save');document.querySelectorAll('input').forEach(input=>input.addEventListener('change',()=>{button.disabled=false;document.querySelector('#result').textContent='Direction '+input.value+' selected';}));button.addEventListener('click',()=>{const index=Number(document.querySelector('input:checked').value);const blob=new Blob([JSON.stringify({direction:index,chosenAt:new Date().toISOString()},null,2)],{type:'application/json'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='design-selection.json';link.click();setTimeout(()=>URL.revokeObjectURL(link.href),1000);});</script></html>`;
   fs.writeFileSync(destination,html);
   writeJson(`${destination}.json`,{schema:1,images:images.map(({data,...item})=>item),createdAt:new Date().toISOString()});
+  if(fs.existsSync(`${destination}.selection.json`))writeJson(`${destination}.selection.json`,null);
   return {board:destination,images:files.length,selection:null,...(action==='diff'?{identical:images[0].sha256===images[1].sha256}: {})};
 }
 if(process.argv[1] && path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
