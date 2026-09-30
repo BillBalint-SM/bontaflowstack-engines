@@ -1,7 +1,18 @@
 # BontaFlowStack Engines
 
-Own browser, rendering and local design tools for the 28-skill BontaFlowStack plugin.
+Own browser, rendering and local design tools for the 29-skill BontaFlowStack plugin.
 The source package uses the BontaFlow MIT license in [LICENSE](LICENSE).
+
+## 0.3.1 — 2026-09-30
+
+- Design selection checks current board metadata and image hashes. Successful
+  compare, gallery and diff regeneration clears the prior choice.
+- Active HTTP headers survive browser handoff, restart and user-agent changes.
+  Cookies, local/session storage, URLs and the selected tab remain available.
+- Headless-to-visible handoff/connect relaunches Chromium and reloads pages;
+  unsaved form edits and in-memory application state are not retained. Repeating
+  handoff in an already visible session does not reload it.
+- Dependency versions remain unchanged. Use this engine with plugin 0.5.1.
 
 ## Install
 
