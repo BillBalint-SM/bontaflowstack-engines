@@ -24,13 +24,19 @@ the source archive. Their installed package files remain intact.
   interaction, one-time JavaScript, tables, screenshots, PDF, responsive capture,
   performance samples, logs and separate tabs.
 - **Continuation:** a task-owned profile, cookies and local storage persist.
-  Visible handoff also preserves session storage and open URLs. Resume uses that
-  same logical session. Restart does not promise to preserve in-memory application
-  state or unsaved form edits; finish those interactions before requesting restart.
+  Visible handoff also preserves session storage, open URLs and the selected tab.
+  Active HTTP headers survive handoff, restart and user-agent changes within the
+  running service. They are kept in memory and must be set again after stop.
+  Switching from headless to visible through handoff/connect relaunches Chromium
+  and reloads pages. It does not preserve in-memory application state or unsaved
+  form edits. Use connect before those interactions when human access is needed.
+  Restart also reloads pages. Resume uses the same logical session.
 - **Render:** actual Chromium output from a local HTML file or URL, desktop/mobile
   viewports, page errors and overflow observations.
 - **Design:** local comparison boards, explicit selection with image fingerprints,
   a gallery, before/after comparison and implementation prompts.
+  Regenerating a board clears its choice. Reading a choice checks the current
+  board metadata and image bytes; changed inputs require a new user choice.
 - **Images:** the BontaFlowStack skill calls Codex's image generation/editing tool.
   This package makes no image API requests.
 - **Pretext:** the entry ES module from the separately installed npm package,

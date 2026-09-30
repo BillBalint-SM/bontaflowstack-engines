@@ -11,7 +11,7 @@ export class BrowserSession {
     this.profile=path.join(os.homedir(),'.bontaflowstack','browser-profiles',identity);
     noLinks(this.profile);
     this.visible=false; this.refs=new Map(); this.serial=0; this.logs={console:[],network:[],dialog:[]};
-    this.dialogChoice={accept:false}; this.userAgent=undefined;
+    this.dialogChoice={accept:false}; this.userAgent=undefined; this.extraHTTPHeaders={};
   }
   pages() { return this.context?.pages().filter(p=>!p.isClosed()) || []; }
   log(kind,item) {
@@ -37,7 +37,7 @@ export class BrowserSession {
     this.visible=visible;
     // Chromium's Windows profile creation rejects deeply nested state paths.
     this.context=await this.chromium.launchPersistentContext(this.profile,{
-      headless:!visible,chromiumSandbox:true,viewport:{width:1280,height:800},userAgent:this.userAgent,
+      headless:!visible,chromiumSandbox:true,viewport:{width:1280,height:800},userAgent:this.userAgent,extraHTTPHeaders:this.extraHTTPHeaders,
       acceptDownloads:true,downloadsPath:path.join(this.folder,'downloads')
     });
     this.context.setDefaultTimeout(15000); this.context.setDefaultNavigationTimeout(25000);
@@ -166,7 +166,9 @@ export class BrowserSession {
         const split=first?.indexOf('=');ensure(split>0,'Use name=value');await this.context.addCookies([{name:first.slice(0,split),value:first.slice(split+1),url:page.url()}]);return {stored:first.slice(0,split)};
       }
       case 'header': {
-        const split=first?.indexOf(':');ensure(split>0,'Use name:value');await this.context.setExtraHTTPHeaders({[first.slice(0,split).trim()]:first.slice(split+1).trim()});return {header:first.slice(0,split)};
+        const split=first?.indexOf(':');ensure(split>0,'Use name:value');
+        const headers={[first.slice(0,split).trim()]:first.slice(split+1).trim()};
+        await this.context.setExtraHTTPHeaders(headers);this.extraHTTPHeaders=headers;return {header:first.slice(0,split)};
       }
       case 'useragent': this.userAgent=rest.join(' ');await this.close();await this.launch();return {userAgent:this.userAgent};
       case 'perf': return page.evaluate(async()=>{

@@ -16,6 +16,7 @@ Session: status, connect [url], handoff [message], resume, stop, restart
 Configuration: cookie <name=value>, header <name:value>, useragent <value>, dialog-accept [text], dialog-dismiss
 Batch: chain (JSON arrays on stdin), diff <url1> <url2>
 Selectors may use @e references from the latest snapshot. Refresh after navigation.
+Switching from headless to visible reloads pages; finish unsaved interactions first.
 Only this task's browser and profile are managed. No saved automation commands.`;
 
 export function sessionFile() {
