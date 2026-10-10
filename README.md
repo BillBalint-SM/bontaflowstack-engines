@@ -34,7 +34,10 @@ the source archive. Their installed package files remain intact.
 - **Browser:** navigation, fresh element references, page/DOM reading, forms,
   interaction, one-time JavaScript, tables, screenshots, PDF, responsive capture,
   performance samples, logs and separate tabs.
-- **Continuation:** a task-owned profile, cookies and local storage persist.
+- **Continuation:** a task-owned profile, persistent cookies and local storage persist.
+  Session cookies, including HttpOnly cookies, survive handoff/connect, restart
+  and user-agent changes within the running service. They are retained in memory
+  and restored before pages reload; stopping the service ends this retention.
   Visible handoff also preserves session storage, open URLs and the selected tab.
   Active HTTP headers survive handoff, restart and user-agent changes within the
   running service. They are kept in memory and must be set again after stop.

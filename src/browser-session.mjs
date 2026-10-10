@@ -11,6 +11,7 @@ export class BrowserSession {
     this.profile=path.join(os.homedir(),'.bontaflowstack','browser-profiles',identity);
     noLinks(this.profile);
     this.visible=false; this.refs=new Map(); this.serial=0; this.logs={console:[],network:[],dialog:[]};
+    this.relaunchCookies=[];
     this.dialogChoice={accept:false}; this.userAgent=undefined; this.extraHTTPHeaders={};
   }
   pages() { return this.context?.pages().filter(p=>!p.isClosed()) || []; }
@@ -41,6 +42,7 @@ export class BrowserSession {
       acceptDownloads:true,downloadsPath:path.join(this.folder,'downloads')
     });
     this.context.setDefaultTimeout(15000); this.context.setDefaultNavigationTimeout(25000);
+    if(this.relaunchCookies.length)await this.context.addCookies(this.relaunchCookies);
     this.context.on('page',page=>this.attach(page)); this.pages().forEach(page=>this.attach(page));
     this.current=this.pages()[0] || await this.context.newPage();
     const saved=readJson(path.join(this.folder,'tabs.json'));
@@ -69,7 +71,10 @@ export class BrowserSession {
   }
   async close() {
     if(!this.context)return;
-    await this.save(); const context=this.context; this.context=null; this.current=null; this.refs.clear(); await context.close();
+    await this.save();
+    // Closing Chromium drops session cookies; keep them in memory for this service's relaunch.
+    this.relaunchCookies=await this.context.cookies();
+    const context=this.context; this.context=null; this.current=null; this.refs.clear(); await context.close();
   }
   async switchVisible() {
     if(!this.visible) { await this.close(); await this.launch(true); }
